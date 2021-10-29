@@ -5,6 +5,7 @@ export default class Controller {
 
     this.modal.bindBoardChange(this.#onBoardChange);
     this.modal.bindWin(this.onWin);
+    this.modal.bindOnTie(this.onTie);
 
     this.view.bindDropInColumn(this.#handleDrop);
 
@@ -13,6 +14,11 @@ export default class Controller {
 
     this._turn = "red";
   }
+
+  onTie = () => {
+    this.view.renderTie();
+    this.modal.restartGame();
+  };
 
   onWin = (color) => {
     this.view.renderWin(color);
@@ -26,6 +32,7 @@ export default class Controller {
   #handleDrop = (column) => {
     this.nextTurn();
     this.modal.dropDisc(column, this.turn);
+    // modal make turnAI
   };
   get turn() {
     return this._turn;

@@ -55,6 +55,10 @@ export default class View {
     alert(`${color} wins!`);
   }
 
+  renderTie() {
+    alert("Tie!");
+  }
+
   removeAllChildNodes(parent) {
     while (parent.firstChild) {
       parent.removeChild(parent.firstChild);
