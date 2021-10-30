@@ -31,8 +31,8 @@ export default class Controller {
 
   #handleDrop = (column) => {
     this.nextTurn();
-    this.modal.dropDisc(column, this.turn);
-    // modal make turnAI
+    this.modal.dropDisc(column, "blue");
+    this.modal.makeAiMove();
   };
   get turn() {
     return this._turn;

@@ -144,44 +144,112 @@ export default class Modal {
     this.#_commit(this._board);
   }
 
-  makeAiTurn(board) {}
+  makeAiMove() {
+    let [col, value] = this.minimax(this._board, 5, -Infinity, Infinity, true);
+    this.dropDiscInboard(col, "red", this._board);
+    this.checkIfWin();
+    this.#_commit(this._board);
+  }
 
-  calcTree(initialBoard, MaxDepth, color) {
-    const newBoards = []
-    for (let i = 0; i < 7; i++) {
-      if (this.dropDiscInboard(i, color, initialBoard))
-      
+  minimax(board, depth, alpha, beta, maximizingPlayer) {
+    const validLocations = this.getValidLocations(board);
+    const isTerminal = this.isTerminalNode(board);
+    if (depth === 0 || isTerminal) {
+      if (isTerminal) {
+        if (this.checkIfColorWin("red", board)) {
+          return [null, Infinity];
+        } else if (this.checkIfColorWin("blue", board)) {
+          return [null, -Infinity];
+        } else {
+          return [null, 0];
+        }
+      } else {
+        return [null, this.heuristicFunction(board)];
+      }
     }
+    if (maximizingPlayer) {
+      let value = -Infinity;
+      let column = validLocations[0];
+      for (let col of validLocations) {
+        const bCopy = board.map((arr) => arr.slice());
+        this.dropDiscInboard(col, "red", bCopy);
+        let newScore = this.minimax(bCopy, depth - 1, alpha, beta, false);
+        if (newScore > value) {
+          value = newScore;
+          column = col;
+        }
+        alpha = Math.max(alpha, value);
+        if (alpha >= beta) {
+          break;
+        }
+      }
+      return [column, value];
+    } else {
+      let value = Infinity;
+      let column = validLocations[0];
+      for (let col of validLocations) {
+        const bCopy = board.map((arr) => arr.slice());
+        this.dropDiscInboard(col, "blue", bCopy);
+        let newScore = this.minimax(bCopy, depth - 1, alpha, beta, true);
+        if (newScore < value) {
+          value = newScore;
+          column = col;
+        }
+        beta = Math.min(beta, value);
+        if (alpha >= beta) {
+          break;
+        }
+      }
+      return [column, value];
+    }
+  }
+
+  isTerminalNode(board) {
+    return (
+      this.checkIfColorWin("red", board) ||
+      this.checkIfColorWin("blue", board) ||
+      this.getValidLocations(board).length === 0
+    );
+  }
+
+  getValidLocations(board) {
+    const validLocations = [];
+
+    for (let col = 0; col < this.boardWidth; col++) {
+      if (this.isValidLocation(board, col)) {
+        validLocations.push(col);
+      }
+    }
+    return validLocations;
+  }
+
+  isValidLocation(board, col) {
+    if (board[col].some((cell) => cell === "0")) {
+      return true;
+    }
+    return false;
   }
 
   heuristicFunction(board) {
     // returns a value for advantage of red
-    if (this.checkIfColorWin("red", board)) {
-      return 100;
-    } else {
-      return this.getNumOfGood3("red") * 3 - this.getNumOfGood3("blue") * 3;
-    }
+
+    return (
+      this.getNumOfGood3("red", board) * 3 -
+      this.getNumOfGood3("blue", board) * 3
+    );
   }
 
-  getNumOfGood3(color) {
+  getNumOfGood3(color, board) {
     // check for 3 side by side and have at least one end open
     // blank on top
     let counter = 0;
     for (let j = 0; j < this.boardHeight - 3; j++) {
       for (let i = 0; i < this.boardWidth; i++) {
         if (
-          this.board[i][j] === "0" &&
-          this.board[i][j + 1] === color &&
-          this.board[i][j + 2] === color &&
-          this.board[i][j + 3] === color
-        ) {
-          counter++;
-        }
-        if (
-          this.board[i][j] === color &&
-          this.board[i][j + 1] === color &&
-          this.board[i][j + 2] === color &&
-          this.board[i][j + 3] === "0"
+          board[i][j] === color &&
+          board[i][j + 1] === color &&
+          board[i][j + 2] === color &&
+          board[i][j + 3] === "0"
         ) {
           counter++;
         }
@@ -195,18 +263,18 @@ export default class Modal {
     for (let i = 0; i < this.boardWidth - 3; i++) {
       for (let j = 0; j < this.boardHeight; j++) {
         if (
-          this._board[i][j] === "0" &&
-          this._board[i + 1][j] === color &&
-          this._board[i + 2][j] === color &&
-          this._board[i + 3][j] === color
+          board[i][j] === "0" &&
+          board[i + 1][j] === color &&
+          board[i + 2][j] === color &&
+          board[i + 3][j] === color
         ) {
           counter++;
         }
         if (
-          this._board[i][j] === color &&
-          this._board[i + 1][j] === color &&
-          this._board[i + 2][j] === color &&
-          this._board[i + 3][j] === "0"
+          board[i][j] === color &&
+          board[i + 1][j] === color &&
+          board[i + 2][j] === color &&
+          board[i + 3][j] === "0"
         ) {
           counter++;
         }
@@ -218,46 +286,63 @@ export default class Modal {
     // ascendingDiagonalCheck
     for (let i = 3; i < this.boardWidth; i++) {
       for (let j = 0; j < this.boardHeight - 3; j++) {
-        if (
-          this._board[i][j] === "0" &&
-          this._board[i - 1][j + 1] === color &&
-          this._board[i - 2][j + 2] === color &&
-          this._board[i - 3][j + 3] === color
-        ) {
-          counter++;
+        if (j > 0) {
+          if (
+            board[i][j] === "0" &&
+            board[i][j - 1] != "0" &&
+            board[i - 1][j + 1] === color &&
+            board[i - 2][j + 2] === color &&
+            board[i - 3][j + 3] === color
+          ) {
+            counter++;
+          }
+        } else {
+          if (
+            board[i][j] === "0" &&
+            board[i - 1][j + 1] === color &&
+            board[i - 2][j + 2] === color &&
+            board[i - 3][j + 3] === color
+          ) {
+            counter++;
+          }
         }
-        if (
-          this._board[i][j] === color &&
-          this._board[i - 1][j + 1] === color &&
-          this._board[i - 2][j + 2] === color &&
-          this._board[i - 3][j + 3] === "0"
-        ) {
-          counter++;
-        }
-      }
-    }
 
-    // descendingDiagonalCheck
-    for (let i = 3; i < this.boardWidth; i++) {
-      for (let j = 3; j < this.boardHeight; j++) {
         if (
-          this._board[i][j] === "0" &&
-          this._board[i - 1][j - 1] === color &&
-          this._board[i - 2][j - 2] === color &&
-          this._board[i - 3][j - 3] === color
+          board[i][j] === color &&
+          board[i - 1][j + 1] === color &&
+          board[i - 2][j + 2] === color &&
+          board[i - 3][j + 3] === "0" &&
+          board[i - 3][j + 2] != "0"
         ) {
           counter++;
         }
-        if (
-          this._board[i][j] === color &&
-          this._board[i - 1][j - 1] === color &&
-          this._board[i - 2][j - 2] === color &&
-          this._board[i - 3][j - 3] === "0"
-        ) {
-          counter++;
+
+        // descendingDiagonalCheck
+        for (let i = 3; i < this.boardWidth; i++) {
+          for (let j = 3; j < this.boardHeight; j++) {
+            if (
+              board[i][j] === "0" &&
+              board[i][j - 1] !== "0" &&
+              board[i - 1][j - 1] === color &&
+              board[i - 2][j - 2] === color &&
+              board[i - 3][j - 3] === color
+            ) {
+              counter++;
+            }
+            if (
+              board[i][j] === color &&
+              board[i - 1][j - 1] === color &&
+              board[i - 2][j - 2] === color &&
+              board[i - 3][j - 3] === "0"
+            ) {
+              counter++;
+            }
+          }
         }
+        return counter;
       }
+
+      // getNumOfGood2() {}
     }
-    return counter;
   }
 }
