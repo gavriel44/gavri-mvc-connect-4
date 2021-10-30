@@ -21,9 +21,10 @@ export default class Controller {
   };
 
   onWin = (color) => {
-    this.view.renderBoard(board);
-    this.view.renderWin(color);
-    this.modal.restartGame();
+    setTimeout(() => {
+      this.view.renderWin(color);
+      this.modal.restartGame();
+    }, 100);
   };
 
   #onBoardChange = (board) => {
