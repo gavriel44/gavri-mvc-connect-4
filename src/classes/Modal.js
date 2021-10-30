@@ -145,7 +145,7 @@ export default class Modal {
   }
 
   makeAiMove() {
-    let [col, value] = this.minimax(this._board, 5, -Infinity, Infinity, true);
+    let [col, value] = this.minimax(this._board, 7, -Infinity, Infinity, true);
     this.dropDiscInboard(col, "red", this._board);
     this.checkIfWin();
     this.#_commit(this._board);
@@ -169,11 +169,12 @@ export default class Modal {
     }
     if (maximizingPlayer) {
       let value = -Infinity;
-      let column = validLocations[0];
+      let column =
+        validLocations[Math.floor(Math.random() * validLocations.length)];
       for (let col of validLocations) {
         const bCopy = board.map((arr) => arr.slice());
         this.dropDiscInboard(col, "red", bCopy);
-        let newScore = this.minimax(bCopy, depth - 1, alpha, beta, false);
+        let [c, newScore] = this.minimax(bCopy, depth - 1, alpha, beta, false);
         if (newScore > value) {
           value = newScore;
           column = col;
@@ -183,14 +184,16 @@ export default class Modal {
           break;
         }
       }
+      console.log("maximizingPlayer", [column, value], depth);
       return [column, value];
     } else {
       let value = Infinity;
-      let column = validLocations[0];
+      let column =
+        validLocations[Math.floor(Math.random() * validLocations.length)];
       for (let col of validLocations) {
         const bCopy = board.map((arr) => arr.slice());
         this.dropDiscInboard(col, "blue", bCopy);
-        let newScore = this.minimax(bCopy, depth - 1, alpha, beta, true);
+        let [c, newScore] = this.minimax(bCopy, depth - 1, alpha, beta, true);
         if (newScore < value) {
           value = newScore;
           column = col;
@@ -200,6 +203,8 @@ export default class Modal {
           break;
         }
       }
+      // console.log("minimizingPlayer", [column, value]);
+
       return [column, value];
     }
   }
@@ -232,11 +237,18 @@ export default class Modal {
 
   heuristicFunction(board) {
     // returns a value for advantage of red
-
-    return (
+    let redScore =
       this.getNumOfGood3("red", board) * 3 -
-      this.getNumOfGood3("blue", board) * 3
-    );
+      this.getNumOfGood3("blue", board) * 3;
+
+    if (this.checkIfColorWin("red", board)) {
+      return 100;
+    }
+    if (this.checkIfColorWin("blue", board)) {
+      return -100;
+    }
+
+    return redScore;
   }
 
   getNumOfGood3(color, board) {
