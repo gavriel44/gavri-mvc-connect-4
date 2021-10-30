@@ -25,6 +25,7 @@ export default class Controller {
       this.view.renderWin(color);
       this.modal.restartGame();
     }, 100);
+    // not
   };
 
   #onBoardChange = (board) => {
