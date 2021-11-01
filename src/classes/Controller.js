@@ -1,3 +1,5 @@
+import Modal from "./Modal";
+
 export default class Controller {
   constructor(modal, view) {
     this.modal = modal;
@@ -11,6 +13,7 @@ export default class Controller {
 
     // initial render
     this.modal.restartGame();
+    this.modal.makeAiMove();
 
     this._turn = "red";
   }
@@ -26,6 +29,8 @@ export default class Controller {
       this.modal.restartGame();
     }, 100);
     // not
+
+    this.modal.board;
   };
 
   #onBoardChange = (board) => {

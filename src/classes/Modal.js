@@ -1,6 +1,7 @@
 export default class Modal {
   #boardWidth = 7;
   #boardHeight = 6;
+
   constructor() {
     this._board = this.createBoard();
     // JSON.parse(localStorage.getItem("board")) ||
